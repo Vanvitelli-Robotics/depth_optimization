@@ -19,9 +19,9 @@ conda create --name pyhton38 python=3.8
 conda activate python38
 ```
 
-3) Install pip on python38 env
+3) Install some required packages on python38 env
 ```diff
-conda install -n pyhton38 pip
+conda install -n pyhton38 pip numpy scipy matplotlib scikit-learn
 ```
 
 4) Install NVISII
