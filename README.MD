@@ -9,8 +9,22 @@ A solution to improve the pose estimation results getted from only rgb data for 
 ## Getting Started
 
 ### Dependencies
+You need to install NVISII under python <=3.8. If your pyhton version is higher than the required one, you can use a conda env as described below, else skip to 4).
 
-* NVISII
+1) Install conda [instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
+
+2) Setup conda environment 
+```diff
+conda create --name pyhton38 python=3.8
+conda activate python38
+```
+
+3) Install pip on python38 env
+```diff
+conda install -n pyhton38 pip
+```
+
+4) Install NVISII
 ```diff
 pip install nvisii
 ```
