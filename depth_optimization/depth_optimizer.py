@@ -15,6 +15,7 @@ from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
 import matplotlib.markers
 from mpl_toolkits import mplot3d
+from rclpy.qos import QoSProfile
 from sklearn import linear_model
 from numpy import linalg as LA
 import time
@@ -86,7 +87,7 @@ class DepthOptimizer(Node):
         self.cad_dimension = self.scale_conversion(self.cad_dimension,0.01)    
 
         # service creation
-        self.srv = self.create_service(DepthOptimize, 'depth_optimize', self.depth_optimize_callback)
+        self.srv = self.create_service(DepthOptimize, 'depth_optimize', self.depth_optimize_callback,QoSProfile(depth=10))
 
     def scale_conversion(self, array, scale):
         scaled_array = [element * scale for element in range(1,len(array)+1)]
@@ -386,8 +387,12 @@ def main():
 
     depth_optimize = DepthOptimizer()
 
-    rclpy.spin(depth_optimize)
+    try:
+        rclpy.spin(depth_optimize)
+    except KeyboardInterrupt:
+        pass
 
+    depth_optimize.destroy_node()
     rclpy.shutdown()
 
 
