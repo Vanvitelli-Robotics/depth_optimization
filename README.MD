@@ -21,7 +21,7 @@ conda activate python38
 
 3) Install some required packages on python38 env
 ```diff
-conda install -n pyhton38 pip numpy scipy matplotlib scikit-learn
+conda install -n python38 pip numpy scipy matplotlib scikit-learn
 ```
 
 4) Install NVISII
