@@ -15,7 +15,7 @@ You need to install NVISII under python <=3.8 and numpy library. If your pyhton 
 
 2) Setup conda environment 
 ```diff
-conda create --name pyhton38 python=3.8
+conda create --name python38 python=3.8
 conda activate python38
 ```
 
