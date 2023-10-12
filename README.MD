@@ -9,7 +9,18 @@ A solution to improve the pose estimation results getted from only rgb data for 
 ## Getting Started
 
 ### Dependencies
-You need to install NVISII under python <=3.8 and numpy library. If your pyhton version is higher than the required one, you can use a conda env as described below, else skip to 4).
+The ROS2 node (python 3.10) requires the python module NVISII (https://github.com/owl-project/NVISII), wich is available only for python <= 3.8. For compatibility reasons, you can use a conda environment as described below, else skip to 4).
+
+CONDA_BASE=$(conda info --base 
+source $CONDA_BASE/etc/profile.d/conda.sh
+#eval "$(conda shell.bash hook)"
+#export PATH=/home/marco/anaconda3/condabin:$PATH
+
+
+#sleep 1
+# Import conda environment from YAML
+conda activate python38
+)
 
 1) Install conda [instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
 
@@ -42,7 +53,7 @@ pip install nvisii
 
 If you use a virtual environment as conda, note that you have to correctly set the ROS2 variable $PYTHONPATH so that python 3.8 will be used. Following the procedure described in https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#saving-environment-variables, export the variable in the virtual environment by using
 ```diff
-export PYTHONPATH="your_envs_path/python38/lib/python3.8/site-packages:$PYTHONPATH"
+export PYTHONPATH="$CONDA_PREFIX/python38/lib/python3.8/site-packages:$PYTHONPATH"
 ```
 
 ---
