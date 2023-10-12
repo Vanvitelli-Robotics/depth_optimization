@@ -1,4 +1,4 @@
-name: python38
+name: py_depth_opt
 channels:
   - defaults
 dependencies:
