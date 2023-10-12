@@ -46,7 +46,7 @@ conda update python
 ---
 ***NOTE***
 
-If you use a virtual environment as conda, note that you have to correctly set the ROS2 variable $PYTHONPATH so that python 3.8 will be used. Following the procedure described in https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#saving-environment-variables, export the variable in the virtual environment by using
+If you use a virtual environment as conda, note that you have to correctly set the ROS2 variable $PYTHONPATH. Following the procedure described in https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#saving-environment-variables, export the variable in the virtual environment by using
 ```diff
 export PYTHONPATH="$CONDA_PREFIX/lib/python3.8/site-packages:$PYTHONPATH"
 ```
