@@ -13,18 +13,26 @@ You need to install NVISII under python <=3.8 and numpy library. If your pyhton 
 
 1) Install conda [instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
 
-2) Setup conda environment 
+
+2.a) Run the bash script to create the conda environment from the environment.yaml file 
+```diff
+./setup_environment.yaml
+```
+
+Alternativly you can directly create the environment
+
+2.b) Setup conda environment 
 ```diff
 conda create --name python38 python=3.8
 conda activate python38
 ```
 
-3) Install some required packages on python38 env
+2.b.1) Install some required packages on python38 env
 ```diff
 conda install -n python38 pip numpy scipy matplotlib scikit-learn
 ```
 
-4) Install NVISII
+2.b.2) Install NVISII
 ```diff
 pip install nvisii
 ```
@@ -38,3 +46,9 @@ export PYTHONPATH="your_envs_path/python38/lib/python3.8/site-packages:$PYTHONPA
 ```
 
 ---
+
+
+
+
+
+
