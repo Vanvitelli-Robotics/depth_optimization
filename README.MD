@@ -11,17 +11,6 @@ A solution to improve the pose estimation results getted from only rgb data for 
 ### Dependencies
 The ROS2 node (python 3.10) requires the python module NVISII (https://github.com/owl-project/NVISII), wich is available only for python <= 3.8. For compatibility reasons, you can use a conda environment as described below, else skip to 4).
 
-CONDA_BASE=$(conda info --base 
-source $CONDA_BASE/etc/profile.d/conda.sh
-#eval "$(conda shell.bash hook)"
-#export PATH=/home/marco/anaconda3/condabin:$PATH
-
-
-#sleep 1
-# Import conda environment from YAML
-conda activate python38
-)
-
 1) Install conda [instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
 
 
