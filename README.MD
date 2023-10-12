@@ -16,7 +16,7 @@ You need to install NVISII under python <=3.8 and numpy library. If your pyhton 
 
 2.a) Run the bash script to create the conda environment from the environment.yaml file 
 ```diff
-./setup_environment.sh
+source setup_environment.sh
 ```
 
 Alternativly you can directly create the environment
