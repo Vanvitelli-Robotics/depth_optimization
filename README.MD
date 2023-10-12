@@ -23,13 +23,13 @@ Alternativly you can directly create the environment
 
 2.b) Setup conda environment 
 ```diff
-conda create --name python38 python=3.8
-conda activate python38
+conda create --name py_depth_opt python=3.8
+conda activate py_depth_opt
 ```
 
 2.b.1) Install some required packages on python38 env
 ```diff
-conda install -n python38 pip numpy scipy matplotlib scikit-learn
+conda install -n py_depth_opt pip numpy scipy matplotlib scikit-learn
 ```
 
 2.b.2) Install NVISII
@@ -48,10 +48,18 @@ conda update python
 
 If you use a virtual environment as conda, note that you have to correctly set the ROS2 variable $PYTHONPATH so that python 3.8 will be used. Following the procedure described in https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#saving-environment-variables, export the variable in the virtual environment by using
 ```diff
-export PYTHONPATH="$CONDA_PREFIX/python38/lib/python3.8/site-packages:$PYTHONPATH"
+export PYTHONPATH="$CONDA_PREFIX/lib/python3.8/site-packages:$PYTHONPATH"
 ```
 
 ---
+
+Once the conda environemnt is created and the PYTHONPATH correctly setted, you can run the node:
+```diff
+conda activate py_depth_opt
+ros2 run depth_optimization service 
+```
+
+
 
 
 
