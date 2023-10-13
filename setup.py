@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        'service = depth_optimization.depth_optimizer:main',
+        'depth_optimizer_server = depth_optimization.depth_optimizer:main',
         ],
     },
 )
