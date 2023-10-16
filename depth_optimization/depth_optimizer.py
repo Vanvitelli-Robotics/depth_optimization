@@ -84,6 +84,7 @@ class DepthOptimizer(Node):
         # self.obj_to_load = self.get_parameter("/dope/meshes")[self.object_name]   
         # self.cad_dimension = self.get_parameter("/dope/dimensions")[self.object_name] # cm
         # self.mesh_scale = self.get_parameter("/dope/mesh_scales")[self.object_name] 
+        
         #CAD dimension from [cm] to [m] 
         self.cad_dimension = self.scale_conversion(self.cad_dimension,0.01)
 
