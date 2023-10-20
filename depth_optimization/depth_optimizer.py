@@ -76,10 +76,10 @@ class DepthOptimizer(Node):
         super().__init__('depth_optimizer')
         
         #initialization
-        self.obj_to_load = "/home/sfederico/Documents/cad_models/Apple/Apple_4K/food_apple_01_4k.obj" # absolute path to cad model
-        self.object_name = "apple"  # obj name
-        self.cad_dimension = [0.09756118059158325, 0.08538994193077087,0.09590171277523041]  # x, y, z, obj cuboid dimensions [m]
-        self.mesh_scale = 1
+        self.obj_to_load = "/home/sfederico/Documents/cad_models/santal_ace/santal_centered.obj" # absolute path to cad model
+        self.object_name = "santal_ace"  # obj name
+        self.cad_dimension = [8.7, 7, 4.4]  # x, y, z, obj cuboid dimensions [m]
+        self.mesh_scale = 0.001
         # self.object_name = self.get_parameter("/dope/object_of_interest")
         # self.obj_to_load = self.get_parameter("/dope/meshes")[self.object_name]   
         # self.cad_dimension = self.get_parameter("/dope/dimensions")[self.object_name] # cm
@@ -92,7 +92,7 @@ class DepthOptimizer(Node):
         self.srv = self.create_service(DepthOptimize, 'depth_optimize', self.depth_optimize_callback)
 
     def scale_conversion(self, array, scale):
-        scaled_array = [element * scale for element in range(1,len(array)+1)]
+        scaled_array = [element * scale for element in array]
         return scaled_array
 
     
@@ -148,7 +148,7 @@ class DepthOptimizer(Node):
         for i in range(len(self.pixel_cad_h)):
             self.real_useful_depth.append(
                 real_depth_array[self.pixel_cad_h[i]*self.width_ + self.pixel_cad_w[i]])
-        breakpoint()
+        
 
     def virtual_depth_map(self,sigma):
         self.index_render = self.index_render +1
@@ -172,7 +172,7 @@ class DepthOptimizer(Node):
 
         obj_mesh.get_transform().set_scale(nvisii.vec3(scale_obj*self.mesh_scale))
         
-        breakpoint()
+        
         self.virtual_depth_array = nvisii.render_data(
             width=int(self.width_),
             height=int(self.height_),
@@ -197,7 +197,7 @@ class DepthOptimizer(Node):
             if (outlier_mask[i] == True):
                 self.real_useful_depth[i] = 0.0
     
-    def convert_from_uvd(v, u, d, fx, fy, cx, cy):
+    def convert_from_uvd(self,v, u, d, fx, fy, cx, cy):
         x_over_z = (cx - u) / fx
         y_over_z = (cy - v) / fy
         z = d / np.sqrt(1. + x_over_z**2 + y_over_z**2)
@@ -220,8 +220,8 @@ class DepthOptimizer(Node):
                 i = self.pixel_cad_h[k]
                 j = self.pixel_cad_w[k]
 
-                d_hat = self.convert_from_uvd(
-                    i, j, self.virtual_depth_array[i, j, 0], self.fx, self.fy, self.cx, self.cy)
+        
+                d_hat = self.convert_from_uvd(i, j, self.virtual_depth_array[i, j, 0], self.fx, self.fy, self.cx, self.cy)
                 d = self.real_useful_depth[k]
 
                 sum = sum + pow((d-d_hat), 2)
@@ -311,7 +311,7 @@ class DepthOptimizer(Node):
         toc1 = time.perf_counter()
         print(f"get useful pixels realized in {toc1 - tic1:0.4f} seconds")
 
-        breakpoint()
+        
         # If desired, remove outliers with RANSAC regression
         if self.remove_outliers:
             tic1 = time.perf_counter()
@@ -332,6 +332,7 @@ class DepthOptimizer(Node):
         toc = time.perf_counter()
         print(f"Optimization realized in {toc - tic:0.4f} seconds")
 
+
         if res.fun > self.tol_optimization:
             success = False
         else:
@@ -350,26 +351,30 @@ class DepthOptimizer(Node):
         optimized_pose.pose.position.x = p_new[0]
         optimized_pose.pose.position.y = p_new[1]
         optimized_pose.pose.position.z = p_new[2]
-        #optimized_pose.header.frame_id = "camera_color_optical_frame"
         optimized_pose.header.frame_id = self.estimated_pose.header.frame_id
-
-
         optimized_pose.pose.orientation = self.estimated_pose.pose.orientation
+
 
         scale_obj = LA.norm(p_new-f)/LA.norm(p-f)
         scaled_dimension = self.scale_conversion(self.cad_dimension,scale_obj)
 
-        print("Function_min: ", res.fun)
-        print("Sigma_min [m]: ", res.x)
-        print("Scaled cad dimensions [m]: ", scaled_dimension)
-        print("Optimized Pose: ", optimized_pose)
 
         if self.get_plot:
             self.plot_cost_function(sigma_min=self.sigma_min_plt, sigma_max=self.sigma_max_plt)
             self.plot_depth(res.x)
 
-        # let's clean up the GPU
-        # nvisii.deinitialize()
+        if success:
+            print("OPTIMIZATION COMPLETED:\n")    
+            print("Function_min: ", res.fun)
+            print("Sigma_min [m]: ", res.x)
+            print("Scaled cad dimensions [m]: ", scaled_dimension)
+            print("Optimized Pose: ", optimized_pose)
+        else:
+            print("OPTIMIZATION FAILURE")
+            print("Function_min: ", res.fun)
+            print("Sigma_min [m]: ", res.x)
+            print("Scaled cad dimensions [m]: ", scaled_dimension)
+            print("Optimized Pose: ", optimized_pose)
 
         # Clear variables for next service call
         self.pixel_cad_h = []
