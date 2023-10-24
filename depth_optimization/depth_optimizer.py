@@ -13,18 +13,14 @@ import nvisii
 import numpy as np
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
-import matplotlib.markers
-from mpl_toolkits import mplot3d
-from rclpy.qos import QoSProfile
 from sklearn import linear_model
 from numpy import linalg as LA
 import time
 import os
-import pdb
 
 
 """
-This node refines the estimated pose from dope through depth measurements solving an optimization problem
+This node refines the estimated pose from a 6D pose algorithm estimator through depth measurements solving an optimization problem
 Input: estimated_pose, depth_values from aligned_rgb_to_depth_image
 Output: refined_pose
 """
