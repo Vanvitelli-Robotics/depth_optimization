@@ -6,9 +6,9 @@ from geometry_msgs.msg import PoseStamped
 
 import rclpy
 from rclpy.node import Node
+from rcl_interfaces.msg import SetParametersResult
 
 # python modules
-
 import nvisii
 import numpy as np
 from scipy.optimize import minimize_scalar
@@ -19,6 +19,7 @@ import time
 import os
 
 
+
 """
 This node refines the estimated pose from a 6D pose algorithm estimator through depth measurements solving an optimization problem
 Input: estimated_pose, depth_values from aligned_rgb_to_depth_image
@@ -27,9 +28,6 @@ Output: refined_pose
 
 class DepthOptimizer(Node):
 
-    # attributes
-    index_render = 0
-    # -------------------user parameters
     # camera width, height and intrinsics
     width_ = 640
     height_ = 480
@@ -40,12 +38,10 @@ class DepthOptimizer(Node):
     focal_length = 0  
 
     # Object parameters
-    object_name = []
-    obj_to_load = []  
-    cad_dimension = []
+    object_name = "object_entity"
+    mesh_path = []  
     mesh_scale = []
 
-    interactive = True
     # [m] max depth value captured by the virtual camera in meters
     max_virtual_depth = 5
 
@@ -65,32 +61,60 @@ class DepthOptimizer(Node):
 
     # Service
     initialized_scene = False
+    interactive = True
 
 
     # methods
     def __init__(self):
-        super().__init__('depth_optimizer')
+        super().__init__('depth_optimizer', automatically_declare_parameters_from_overrides=True)
         
-        #initialization
-        self.obj_to_load = "/home/sfederico/Documents/cad_models/santal_ace/santal_centered.obj" # absolute path to cad model
-        self.object_name = "santal_ace"  # obj name
-        self.cad_dimension = [8.7, 7, 4.4]  # x, y, z, obj cuboid dimensions [m]
-        self.mesh_scale = 0.001
-        # self.object_name = self.get_parameter("/dope/object_of_interest")
-        # self.obj_to_load = self.get_parameter("/dope/meshes")[self.object_name]   
-        # self.cad_dimension = self.get_parameter("/dope/dimensions")[self.object_name] # cm
-        # self.mesh_scale = self.get_parameter("/dope/mesh_scales")[self.object_name] 
-        
-        #CAD dimension from [cm] to [m] 
-        self.cad_dimension = self.scale_conversion(self.cad_dimension,0.01)
+        # read parameters from yaml file
+        self.read_parameters()
+        self.add_on_set_parameters_callback(self.parameter_callback)
 
         # service creation
         self.srv = self.create_service(DepthOptimize, 'depth_optimize', self.depth_optimize_callback)
 
-    def scale_conversion(self, array, scale):
-        scaled_array = [element * scale for element in array]
-        return scaled_array
+    def parameter_callback(self, parameters):
+        for parameter in parameters:
+            if parameter.name == 'mesh_path':
+                self.mesh_path = parameter.value
+                self.get_logger().info(f"mesh_path changed to: {self.mesh_path}")
+                self.reset_scene(reset_nvisii=True)
 
+            if parameter.name == 'mesh_scale':
+                self.mesh_scale = parameter.value
+                self.get_logger().info(f"mesh_scale changed to: {self.mesh_scale}")
+
+
+        return SetParametersResult(successful=True)
+
+    def read_parameters(self):
+        self.get_logger().info("Reading parameters")
+        
+        self.width_ = self.get_parameter('width_').get_parameter_value().integer_value
+        self.height_ = self.get_parameter('height_').get_parameter_value().integer_value
+        self.fx = self.get_parameter('fx').get_parameter_value().double_value
+        self.fy = self.get_parameter('fy').get_parameter_value().double_value
+        self.cx = self.get_parameter('cx').get_parameter_value().double_value
+        self.cy = self.get_parameter('cy').get_parameter_value().double_value
+        self.focal_length = self.get_parameter('focal_length').get_parameter_value().double_value
+        self.max_virtual_depth = self.get_parameter('max_virtual_depth').get_parameter_value().double_value
+        self.tol_optimization = self.get_parameter('tol_optimization').get_parameter_value().double_value
+        self.remove_outliers = self.get_parameter('remove_outliers').get_parameter_value().bool_value
+        self.mesh_scale = self.get_parameter('mesh_scale').get_parameter_value().double_value
+        self.mesh_path = self.get_parameter('mesh_path').get_parameter_value().string_value
+
+
+        self.get_logger().info(f"Width: {self.width_}, Height: {self.height_}")
+        self.get_logger().info(f"fx: {self.fx}, fy: {self.fy}")
+        self.get_logger().info(f"cx: {self.cx}, cy: {self.cy}")
+        self.get_logger().info(f"Focal Length: {self.focal_length}")
+        self.get_logger().info(f"Max Virtual Depth: {self.max_virtual_depth}")
+        self.get_logger().info(f"Tolerance for Optimization: {self.tol_optimization}")
+        self.get_logger().info(f"Remove Outliers: {self.remove_outliers}")
+        self.get_logger().info(f"Mesh Scale: {self.mesh_scale}")
+        self.get_logger().info(f"Mesh Path: {self.mesh_path}")
     
     def scene_initialization_nvisii(self):
         nvisii.initialize(headless=not self.interactive, verbose=True)
@@ -119,7 +143,7 @@ class DepthOptimizer(Node):
         
         obj_mesh = nvisii.entity.create(
             name=self.object_name,
-            mesh=nvisii.mesh.create_from_file(self.object_name, self.obj_to_load),
+            mesh=nvisii.mesh.create_from_file(self.object_name, self.mesh_path),
             transform=nvisii.transform.create(self.object_name),
             material=nvisii.material.create(self.object_name)
         )
@@ -145,9 +169,7 @@ class DepthOptimizer(Node):
             self.real_useful_depth.append(
                 real_depth_array[self.pixel_cad_h[i]*self.width_ + self.pixel_cad_w[i]])
         
-
     def virtual_depth_map(self,sigma):
-        self.index_render = self.index_render +1
         obj_mesh = nvisii.entity.get(self.object_name)
 
         x = self.estimated_pose.pose.position.x
@@ -283,8 +305,7 @@ class DepthOptimizer(Node):
         plt.show()
 
     def depth_optimize_callback  (self, req, response):
-        #response.sum = request.a + request.b
-        #self.get_logger().info('Incoming request\na: %d b: %d' % (request.a, request.b))
+
         self.get_logger().info('Request received')
         tic = time.perf_counter()
 
@@ -350,10 +371,7 @@ class DepthOptimizer(Node):
         optimized_pose.header.frame_id = self.estimated_pose.header.frame_id
         optimized_pose.pose.orientation = self.estimated_pose.pose.orientation
 
-
         scale_obj = LA.norm(p_new-f)/LA.norm(p-f)
-        scaled_dimension = self.scale_conversion(self.cad_dimension,scale_obj)
-
 
         if self.get_plot:
             self.plot_cost_function(sigma_min=self.sigma_min_plt, sigma_max=self.sigma_max_plt)
@@ -363,28 +381,25 @@ class DepthOptimizer(Node):
             print("OPTIMIZATION COMPLETED:\n")    
             print("Function_min: ", res.fun)
             print("Sigma_min [m]: ", res.x)
-            print("Scaled cad dimensions [m]: ", scaled_dimension)
-            print("Optimized Pose: ", optimized_pose)
-        else:
-            print("OPTIMIZATION FAILURE")
-            print("Function_min: ", res.fun)
-            print("Sigma_min [m]: ", res.x)
-            print("Scaled cad dimensions [m]: ", scaled_dimension)
             print("Optimized Pose: ", optimized_pose)
 
         # Clear variables for next service call
+        self.reset_scene()
+
+        response.refined_pose = optimized_pose
+        response.scale_obj = scale_obj
+        response.success = success
+
+        return response
+    
+    def reset_scene(self, reset_nvisii = False):
+        if reset_nvisii and self.initialized_scene:
+            nvisii.deinitialize()
+            self.initialized_scene = False
         self.pixel_cad_h = []
         self.pixel_cad_w = []
         self.real_useful_depth = []
         self.virtual_depth_array = []
-
-        response.refined_pose = optimized_pose
-        response.scaled_cuboid_dimension = scaled_dimension
-        response.scale_obj = scale_obj
-        response.success = success
-
-        # response = DepthOptimizeResponse(optimized_pose, scaled_dimension, scale_obj, success)
-        return response
 
 def main():
     rclpy.init()
