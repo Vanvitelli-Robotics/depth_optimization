@@ -19,7 +19,6 @@ import time
 import os
 
 
-
 """
 This node refines the estimated pose from a 6D pose algorithm estimator through depth measurements solving an optimization problem
 Input: estimated_pose, depth_values from aligned_rgb_to_depth_image
@@ -80,7 +79,7 @@ class DepthOptimizer(Node):
             if parameter.name == 'mesh_path':
                 self.mesh_path = parameter.value
                 self.get_logger().info(f"mesh_path changed to: {self.mesh_path}")
-                self.reset_scene(reset_nvisii=True)
+                self.reset_scene(True)
 
             if parameter.name == 'mesh_scale':
                 self.mesh_scale = parameter.value
@@ -119,41 +118,7 @@ class DepthOptimizer(Node):
     def scene_initialization_nvisii(self):
         nvisii.initialize(headless=not self.interactive, verbose=True)
         nvisii.disable_updates()
-        # nvisii.disable_denoiser()
-
-        camera = nvisii.entity.create(
-            name="camera",
-            transform=nvisii.transform.create("camera"),
-            camera=nvisii.camera.create_from_intrinsics(
-                name="camera",
-                fx=self.fx,
-                fy=self.fy,
-                cx=self.cx,
-                cy=self.cy,
-                width=self.width_,
-                height=self.height_
-            )
-        )
-        camera.get_transform().look_at(
-            at=(0, 0, 0),
-            up=(0, -1, -1),
-            eye=(1, 1, 0)
-        )
-        nvisii.set_camera_entity(camera)
-        
-        obj_mesh = nvisii.entity.create(
-            name=self.object_name,
-            mesh=nvisii.mesh.create_from_file(self.object_name, self.mesh_path),
-            transform=nvisii.transform.create(self.object_name),
-            material=nvisii.material.create(self.object_name)
-        )
-
-        obj_mesh.get_transform().set_parent(camera.get_transform())
-
-        nvisii.sample_pixel_area(
-            x_sample_interval=(.5, .5),
-            y_sample_interval=(.5, .5)
-        )
+        self.populate_scene()
 
     def get_useful_pixels(self,real_depth_array):
         # This function selects the pixels corresponding to cad object in the virtual scene and corresponding real depth values
@@ -392,14 +357,49 @@ class DepthOptimizer(Node):
 
         return response
     
-    def reset_scene(self, reset_nvisii = False):
-        if reset_nvisii and self.initialized_scene:
-            nvisii.deinitialize()
-            self.initialized_scene = False
+    def reset_scene(self, update_mesh=False):
+        if self.initialized_scene and update_mesh:
+            nvisii.clear_all()
+            self.populate_scene()
         self.pixel_cad_h = []
         self.pixel_cad_w = []
         self.real_useful_depth = []
         self.virtual_depth_array = []
+
+    def populate_scene(self):
+        camera = nvisii.entity.create(
+            name="camera",
+            transform=nvisii.transform.create("camera"),
+            camera=nvisii.camera.create_from_intrinsics(
+                name="camera",
+                fx=self.fx,
+                fy=self.fy,
+                cx=self.cx,
+                cy=self.cy,
+                width=self.width_,
+                height=self.height_
+            )
+        )
+        camera.get_transform().look_at(
+            at=(0, 0, 0),
+            up=(0, -1, -1),
+            eye=(1, 1, 0)
+        )
+        nvisii.set_camera_entity(camera)
+        
+        obj_mesh = nvisii.entity.create(
+            name=self.object_name,
+            mesh=nvisii.mesh.create_from_file(self.object_name, self.mesh_path),
+            transform=nvisii.transform.create(self.object_name),
+            material=nvisii.material.create(self.object_name)
+        )
+
+        obj_mesh.get_transform().set_parent(camera.get_transform())
+
+        nvisii.sample_pixel_area(
+            x_sample_interval=(.5, .5),
+            y_sample_interval=(.5, .5)
+        )
 
 def main():
     rclpy.init()
