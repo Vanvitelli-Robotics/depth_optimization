@@ -6,11 +6,13 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch.conditions import IfCondition
 
+import os
+
 def generate_launch_description():
     # Get the path to the parameters.yaml file
     config_file = os.path.join(get_package_share_directory('depth_optimization'), 'config', 'parameters.yaml')
-    print(config_file)
-    #DeclareLaunchArgument('config_file', default_value=config_file, description='Path to the YAML config file')
+    #bash_script = os.path.join(get_package_share_directory('depth_optimization'), 'bash_script', 'run_depth_opt.sh')
+
     config_file_arg = DeclareLaunchArgument(
         'config_file',
         default_value=config_file,
