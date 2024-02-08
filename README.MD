@@ -4,7 +4,7 @@ This is a ROS2 node to refine the 6D pose coming from any pose estimation algori
 ## Description
 The node exposes a python ROS2 service with the following interface:  
 * ***inputs***: estimated object pose, depth frame values from rgb-d camera, cad model of recongized object (models folder)
-* ***output***: refined object pose, scaling factor of the target object
+* ***outputs***: refined object pose, scaling factor of the target object
 
 ## Getting Started
 
