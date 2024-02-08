@@ -1,5 +1,5 @@
 # Depth Optimizer
-ROS2 service server that implements a pose refinement alghoritm using depth data.
+This is a ROS2 node which exposed a ROS2 service to refine the 6D pose coming from any pose estimation algorithm by exploiting depth measurements. It addresses the _dimension variability problem_ which affects the RGB-only based neural networks, by solving an optimization problem. For more details, see our [paper](https://arxiv.org/abs/2305.15856).
 
 ## Description
 A solution to improve the pose estimation results getted from only rgb data for objects with variable dimensions (like an apple), using depth measures.  
@@ -66,15 +66,17 @@ The depth optimizer node depends on several parameters that can be set through t
 
 If you use this software in a research project, please cite as follows:
 ```
-@INPROCEEDINGS{Costanzo2023,
-  author={Marco Costanzo and Marco De Simone and Sara Federico and Ciro Natale and Salvatore Pirozzi},
-  booktitle={9th International Conference on Control, Decision and Information Technologies (CoDIT'23)}, 
+@INPROCEEDINGS{10284072,
+  author={Costanzo, Marco and De Simone, Marco and Federico, Sara and Natale, Ciro and Pirozzi, Salvatore},
+  booktitle={2023 9th International Conference on Control, Decision and Information Technologies (CoDIT)}, 
   title={Enhanced 6D Pose Estimation for Robotic Fruit Picking}, 
-  month={July},
-  address={Rome, I},
   year={2023},
-  url = "https://arxiv.org/abs/2305.15856"
-}
+  volume={},
+  number={},
+  pages={901-906},
+  keywords={Training;Visualization;Pose estimation;Force;Europe;Artificial neural networks;Sensors},
+  doi={10.1109/CoDIT58514.2023.10284072}}
+
 ```
 
 
