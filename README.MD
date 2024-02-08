@@ -1,10 +1,10 @@
 # Depth Optimizer
-This is a ROS2 node which exposed a ROS2 service to refine the 6D pose coming from any pose estimation algorithm by exploiting depth measurements. It addresses the _dimension variability problem_ which affects the RGB-only based neural networks, by solving an optimization problem. For more details, see our [paper](https://arxiv.org/abs/2305.15856).
+This is a ROS2 node to refine the 6D pose coming from any pose estimation algorithm by exploiting depth measurements. It addresses the _dimension variability problem_ which affects the RGB-only based neural networks when objects of variable dimension have to be inferred. It solves the problem by setting up a geometric optimization problem. For more details, see our [paper](https://arxiv.org/abs/2305.15856).
 
 ## Description
-A solution to improve the pose estimation results getted from only rgb data for objects with variable dimensions (like an apple), using depth measures.  
-* ***input***: estimated object pose, depth frame values from rgb-d camera, cad model of recongized object (models folder)
-* ***output***: refined object pose 
+The node exposes a python ROS2 service with the following interface:  
+* ***inputs***: estimated object pose, depth frame values from rgb-d camera, cad model of recongized object (models folder)
+* ***output***: refined object pose, scaling factor of the target object
 
 ## Getting Started
 
