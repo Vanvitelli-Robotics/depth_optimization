@@ -53,6 +53,7 @@ export PYTHONPATH="$CONDA_PREFIX/lib/python3.8/site-packages:$PYTHONPATH"
 ---
 
 3) Run the node
+
 Once the conda environemnt is created and the PYTHONPATH correctly set (if necessary), you can run the node:
 ```diff
 conda activate py_depth_opt
