@@ -135,6 +135,8 @@ class DepthOptimizer(Node):
                 real_depth_array[self.pixel_cad_h[i]*self.width_ + self.pixel_cad_w[i]])
         
     def virtual_depth_map(self,sigma):
+        print("SIGMA #########################################")
+        print(sigma)
         obj_mesh = nvisii.entity.get(self.object_name)
 
         x = self.estimated_pose.pose.position.x
@@ -323,6 +325,7 @@ class DepthOptimizer(Node):
         if (success == False):
             res.x = 0
         
+      
         x = self.estimated_pose.pose.position.x
         y = self.estimated_pose.pose.position.y
         z = self.estimated_pose.pose.position.z

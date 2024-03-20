@@ -63,6 +63,11 @@ ros2 launch depth_optimization depth_optimizer.launch.py
 ---
 The depth optimizer node depends on several parameters that can be set through the parameters.yaml file in the config folder. Moreover, the two parameters "mesh_path" and "mesh_scale", can be dinamically changed through the cli (ros2 param set) or by code. 
 
+You can launch a simple client node with
+```diff
+ros2 run depth_optimization simple_depth_optimizer_client 
+```
+
 ## How to cite 
 
 If you use this software in a research project, please cite as follows:

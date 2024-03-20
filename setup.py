@@ -26,6 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
         'depth_optimizer_server = depth_optimization.depth_optimizer:main',
+        'simple_depth_optimizer_client = depth_optimization.simple_depth_opt_client:main',
         ],
     },
 )
