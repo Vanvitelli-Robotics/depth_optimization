@@ -20,8 +20,8 @@ class SimpleDepthOptClient(Node):
     depth_scale = 0.001
 
     # variables to store the pose and depth
-    pose_readed = PoseStamped()
-    depth_readed = Image()
+    pose_read = PoseStamped()
+    depth_read = Image()
     depth_array = np.zeros(image_width * image_height, dtype=np.float64)
 
     def __init__(self):
@@ -32,7 +32,7 @@ class SimpleDepthOptClient(Node):
         self.req = DepthOptimize.Request()
 
     def send_request(self):
-        self.req.estimated_pose.pose = self.pose_readed.pose
+        self.req.estimated_pose.pose = self.pose_read.pose
         self.req.depth_matrix = list(self.depth_array.flatten().astype(np.float64))
         self.future = self.cli.call_async(self.req)
         rclpy.spin_until_future_complete(self, self.future)
@@ -40,14 +40,14 @@ class SimpleDepthOptClient(Node):
     
     def pose_callback(self, msg):
         # Process the received pose message
-        self.pose_readed = msg
+        self.pose_read = msg
         
         
         return
     
     def depth_callback(self, msg_d):
         # Process the received depth message
-        self.depth_readed = msg_d
+        self.depth_read = msg_d
         return
     
     def compute_depth(self):
@@ -55,7 +55,7 @@ class SimpleDepthOptClient(Node):
         bridge = CvBridge()
 
         current_depth = np.zeros((self.image_height, self.image_width), dtype=np.float64)
-        current_depth = bridge.imgmsg_to_cv2(self.depth_readed, self.depth_readed.encoding)
+        current_depth = bridge.imgmsg_to_cv2(self.depth_read, self.depth_read.encoding)
         
 
         for i in range(self.image_height):

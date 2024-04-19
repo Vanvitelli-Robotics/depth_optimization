@@ -16,8 +16,14 @@
     remove_outliers: True   # remove outliers using RANSAC
 
     # mesh parameters - These parameters can be dinamically modified trough ros2 param set /depth_optimizer_server /parameter_name value
-    mesh_path: /home/mdesimone/Documents/lime_ocado/Lime.obj  # Path to the mesh file
-    mesh_scale: 1.0  # Scale factor for the mesh
+    # Path to the mesh file
+    mesh_path: /home/mdesimone/Documents/lime_ocado/Lime.obj  
+    # /home/mdesimone/Documents/bowl/bowl.obj
+
+    # Scale factor for the mesh
+    mesh_scale: 1.0 #lime
+    #0.001 #bowl
+      
     
      
 
