@@ -23,6 +23,9 @@ class SimpleDepthOptClient(Node):
     pose_read = PoseStamped()
     depth_read = Image()
     depth_array = np.zeros(image_width * image_height, dtype=np.float64)
+    
+
+
 
     def __init__(self):
         super().__init__('simple_depth_client')
@@ -32,22 +35,27 @@ class SimpleDepthOptClient(Node):
         self.req = DepthOptimize.Request()
 
     def send_request(self):
+        self.req.estimated_pose.header = self.pose_read.header
         self.req.estimated_pose.pose = self.pose_read.pose
+
+         # compute the depth array
+        self.compute_depth()
         self.req.depth_matrix = list(self.depth_array.flatten().astype(np.float64))
         self.future = self.cli.call_async(self.req)
         rclpy.spin_until_future_complete(self, self.future)
+        
         return self.future.result()
     
     def pose_callback(self, msg):
         # Process the received pose message
         self.pose_read = msg
-        
-        
+        print("Pose received")
         return
     
     def depth_callback(self, msg_d):
         # Process the received depth message
         self.depth_read = msg_d
+        print("Depth received")
         return
     
     def compute_depth(self):
@@ -57,13 +65,15 @@ class SimpleDepthOptClient(Node):
         current_depth = np.zeros((self.image_height, self.image_width), dtype=np.float64)
         current_depth = bridge.imgmsg_to_cv2(self.depth_read, self.depth_read.encoding)
         
+        #clear the depth array
+        self.depth_array = np.zeros(self.image_width * self.image_height, dtype=np.float64)
 
         for i in range(self.image_height):
             for j in range(self.image_width):
                 self.depth_array[i * self.image_width + j] += current_depth[i, j] * np.float64(self.depth_scale)
 
         return
-        
+
 
 
 def main(args=None):
@@ -72,7 +82,7 @@ def main(args=None):
     minimal_client = SimpleDepthOptClient()
 
     # topics where the estimated pose and depth are published
-    pose_topic = '/dope/pose_lime'
+    pose_topic = '/dope/pose_fork'
     depth_topic = '/camera/aligned_depth_to_color/image_raw'
 
 
@@ -81,14 +91,14 @@ def main(args=None):
         PoseStamped,
         pose_topic,
         minimal_client.pose_callback,
-        10
+        1
     )
 
     depth_subscriber = minimal_client.create_subscription(
         Image,
         depth_topic,
         minimal_client.depth_callback,
-        10
+        1
     )
     
     # spin to read some messages
@@ -98,22 +108,40 @@ def main(args=None):
         time.sleep(0.1)
    
 
-    # compute the depth array
-    minimal_client.compute_depth()
 
+    # publisher to publish the refined pose
+    refined_pose_pub = minimal_client.create_publisher(PoseStamped, 'refined_pose', 1)
 
-    # send the request
+    # send the requests
     time.sleep(1)
-    response = minimal_client.send_request()
+
+    while True:
+        response = minimal_client.send_request()
+
+        print("RESPONSE RECEIVED")
+        print("refined position:")
+        print("x = " + str(response.refined_pose.pose.position.x))
+        print("y = " + str(response.refined_pose.pose.position.y))
+        print("z = " + str(response.refined_pose.pose.position.z))
+
+        print("scale factor = " + str(response.scale_obj))
+
+        # publish the refined pose
+        refined_pose_pub.publish(response.refined_pose)
+
+        # rclpy.spin_once(minimal_client, timeout_sec=10.0)
+        for _ in range(N):
+            rclpy.spin_once(minimal_client)
+            time.sleep(0.1)
 
 
-    print("RESPONSE RECEIVED")
-    print("refined position:")
-    print("x = " + str(response.refined_pose.pose.position.x))
-    print("y = " + str(response.refined_pose.pose.position.y))
-    print("z = " + str(response.refined_pose.pose.position.z))
-
-    print("scale factor = " + str(response.scale_obj))
+        user_input = input("Do you want to continue? (y/n): ")
+        if user_input.lower() != 'y':
+            N = 30
+            for _ in range(N):
+                rclpy.spin_once(minimal_client)
+                time.sleep(0.1)
+            break
 
     minimal_client.destroy_node()
     rclpy.shutdown()

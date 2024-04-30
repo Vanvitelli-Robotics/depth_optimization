@@ -17,13 +17,16 @@
 
     # mesh parameters - These parameters can be dinamically modified trough ros2 param set /depth_optimizer_server /parameter_name value
     # Path to the mesh file
-    mesh_path: /home/mdesimone/Documents/lime_ocado/Lime.obj  
-    # /home/mdesimone/Documents/bowl/bowl.obj
+    mesh_path: /home/mdesimone/Documents/fork/fork.obj
+    # /home/mdesimone/Documents/simple_glass/simple_glass.obj
+    # /home/mdesimone/Documents/fork/fork.obj
+    # /home/mdesimone/Documents/bowl/bowl.obj 
+    # /home/mdesimone/Documents/lime_ocado/Lime.obj  #lime
 
     # Scale factor for the mesh
-    mesh_scale: 1.0 #lime
-    #0.001 #bowl
-      
+    mesh_scale: 1.0
+    # 0.001 #bowl
+    #1.0 #lime
     
      
 
