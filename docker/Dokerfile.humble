@@ -55,11 +55,11 @@ RUN rm Miniconda3-latest-Linux-x86_64.sh
 
 # Setup colcon workspace
 ENV ROS2WS ${HOME}/ros2ws
-COPY . ${ROS2WS}/src/depth_optimization
-COPY docker/init_workspace.sh ${HOME}
+COPY .* ${ROS2WS}/src/depth_optimization/
+COPY /docker/init_workspace.sh ${HOME}
 COPY /depth_optimization/setup_environment.sh ${HOME}
-RUN bash ${ROS2WS}/src/depth_optimization/docker/init_workspace.sh
-RUN echo "source ${ROS2WS}/install/setup.bash" >> ${HOME}/.bashrc
+#RUN bash /${HOME}/init_workspace.sh
+#RUN echo "source ${ROS2WS}/install/setup.bash" >> ${HOME}/.bashrc
 
 ENV DISPLAY :0
 ENV NVIDIA_VISIBLE_DEVICES all

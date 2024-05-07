@@ -11,7 +11,7 @@ fi
 # a different directory
 HOST_DIR=$2
 if [[ -z "${HOST_DIR}" ]]; then
-    HOST_DIR=`realpath ${PWD}`
+    HOST_DIR=`realpath ${PWD}/..`
 fi
 
 CONTAINER_DIR=$3
@@ -26,7 +26,8 @@ DEPTH_ID=`docker ps -aqf "name=^/${CONTAINER_NAME}$"`
 if [ -z "${DEPTH_ID}" ]; then
     echo "Creating new depth_optimizer docker container."
     xhost +local:root
-    docker run --gpus all  -it --privileged --network=host -v ${HOST_DIR}:${CONTAINER_DIR}:rw -v /tmp/.X11-unix:/tmp/.X11-unix:rw --env="DISPLAY" --name=${CONTAINER_NAME} depth-optimizer:humble-v1 bash
+    docker run --gpus all  -it --privileged -v ${HOST_DIR}:${CONTAINER_DIR}:rw -v /tmp/.X11-unix:/tmp/.X11-unix:rw --env="DISPLAY" --name=${CONTAINER_NAME} depth-optimizer:humble-v1 bash
+    #--network=host ros2 not work with this
 else
     echo "Found depth_optimizer docker container: ${DEPTH_ID}."
     # Check if the container is already running and start if necessary.
