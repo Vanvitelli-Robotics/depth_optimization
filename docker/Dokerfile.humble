@@ -1,0 +1,69 @@
+
+FROM osrf/ros:humble-desktop
+# To build:
+# docker build -t depth-optimizer:humble-v1 -f Dokerfile.humble ..
+
+ENV HOME /root
+
+# Install system and development components
+RUN apt-get update && apt-get -y --no-install-recommends install \
+    apt-utils \
+    software-properties-common \
+    build-essential \
+    cmake \
+    git \
+    python3-pip \
+    libxext6 \
+    libx11-6 \
+    libglvnd0 \
+    libgl1 \
+    libglx0 \
+    libegl1 \
+    freeglut3-dev \
+    wget \
+    && apt-get -y autoremove \
+    && apt-get clean
+
+# Install required ROS components
+RUN apt-get update && apt-get -y --no-install-recommends install \
+  ros-humble-cv-bridge \
+  ros-humble-geometry-msgs \
+  ros-humble-message-filters \
+  ros-humble-resource-retriever \
+  ros-humble-rclpy \
+  ros-humble-sensor-msgs \
+  ros-humble-std-msgs \
+  ros-humble-tf2 \
+  ros-humble-vision-msgs \
+  ros-humble-visualization-msgs \
+  ros-humble-rviz2 \
+  && apt-get -y autoremove \
+  && apt-get clean
+
+
+# install microconda
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh 
+RUN bash Miniconda3-latest-Linux-x86_64.sh -b -u -p ${HOME}/miniconda3
+RUN rm Miniconda3-latest-Linux-x86_64.sh
+#ENV PATH ${HOME}/miniconda3/bin:$PATH
+
+
+#COPY docker/install_microconda.sh ${HOME}
+#RUN ${HOME}/install_microconda.sh
+#RUN conda init bash \
+#    && . ~/.bashrc
+
+# Setup colcon workspace
+ENV ROS2WS ${HOME}/ros2ws
+COPY . ${ROS2WS}/src/depth_optimization
+COPY docker/init_workspace.sh ${HOME}
+COPY /depth_optimization/setup_environment.sh ${HOME}
+RUN bash ${ROS2WS}/src/depth_optimization/docker/init_workspace.sh
+RUN echo "source ${ROS2WS}/install/setup.bash" >> ${HOME}/.bashrc
+
+ENV DISPLAY :0
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
+ENV TERM=xterm
+# Some QT-Apps don't show controls without this
+ENV QT_X11_NO_MITSHM 1
