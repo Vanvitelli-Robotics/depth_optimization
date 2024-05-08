@@ -27,6 +27,8 @@ setup(
         'console_scripts': [
         'depth_optimizer_server = depth_optimization.depth_optimizer:main',
         'simple_depth_optimizer_client = depth_optimization.simple_depth_opt_client:main',
+        'depth_optimizer_server_simple = depth_optimization.depth_optimizer_simple:main',
+        
         ],
     },
 )
