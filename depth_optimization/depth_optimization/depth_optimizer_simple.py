@@ -18,6 +18,8 @@ import time
 import os
 from plyfile import PlyData
 from scipy.spatial.transform import Rotation
+import cv2
+import math
 
 
 """
@@ -117,7 +119,7 @@ class DepthOptimizer(Node):
 
 
 
-    def generate_depth_map(vertices, intrinsic_matrix, extrinsic_matrix, image_dimensions):
+    def generate_depth_map(self,vertices, intrinsic_matrix, extrinsic_matrix, image_dimensions):
         # Convert vertices to homogeneous coordinates (add 1)
         homogeneous_vertices = np.hstack((vertices, np.ones((vertices.shape[0], 1))))
 
@@ -137,17 +139,24 @@ class DepthOptimizer(Node):
 
         # Draw projected points on the depth map
         for point in projected_vertices:
-            x, y, z = point.astype(int)
+            x, y, z = point.astype(float)
             if 0 <= x < image_dimensions[1] and 0 <= y < image_dimensions[0]:
-                depth_map[y, x] = z  # Depth Z
-                object_pixels.append((x, y))  # Add the pixel to the list of object pixels
+                xr = math.floor(x)
+                yr = math.floor(y)
+                if math.isnan(depth_map[yr,xr]):          
+                    depth_map[yr, xr] = z  # Depth Z
+                    object_pixels.append((xr, yr))  # Add the pixel to the list of object pixels
+                else:        
+                    # the pixel is already occupied => take the nearest one
+                    depth_map[yr,xr] = min(z,depth_map[yr,xr])
+
 
         return depth_map, object_pixels
                 
         
-    def remove_occluded_points(depth_map,object_pixels):
+    def remove_occluded_points(self,depth_map,object_pixels):
         # Define neighborhood size
-        neighborhood_size = 2
+        neighborhood_size = 10
 
 
         # Create an empty array to store the result
@@ -161,8 +170,8 @@ class DepthOptimizer(Node):
                 
 
                 # Check if the current pixel is at the border where the neighborhood is not fully available
-                if y - neighborhood_size >= 0 and y + neighborhood_size < height and \
-                        x - neighborhood_size >= 0 and x + neighborhood_size < width:
+                if y - neighborhood_size >= 0 and y + neighborhood_size < self.height_ and \
+                        x - neighborhood_size >= 0 and x + neighborhood_size < self.width_:
                     # Extract the neighborhood around the current pixel
                     neighborhood = depth_map[y - neighborhood_size:y + neighborhood_size + 1,
                                             x - neighborhood_size:x + neighborhood_size + 1]
@@ -177,7 +186,7 @@ class DepthOptimizer(Node):
 
         return result_map
 
-    def read_ply_file(file_name):
+    def read_ply_file(self,file_name):
         try:
             # Read the PLY file
             with open(file_name, 'rb') as f:
@@ -204,30 +213,52 @@ class DepthOptimizer(Node):
     def get_useful_pixels(self,real_depth_array):
         # This function selects the pixels corresponding to cad object in the virtual scene and corresponding real depth values
         self.virtual_depth_map(0)
-
+  
+        if len(real_depth_array)==0:
+            print("empty real depth array")
+        
         for i in range(len(self.pixel_cad_h)):
             self.real_useful_depth.append(
                 real_depth_array[self.pixel_cad_h[i]*self.width_ + self.pixel_cad_w[i]])
         
+        
     def virtual_depth_map(self,sigma):
-        print(sigma)
-       
-        x = self.estimated_pose.pose.position.x
-        y = self.estimated_pose.pose.position.y
-        z = self.estimated_pose.pose.position.z
-
-        p = np.array([x, y, z])
-        f = np.array([0, 0, self.focal_length])
-
-        p_new = p + np.multiply(np.divide((f-p), LA.norm(p-f)), sigma)
-        scale_obj = LA.norm(p_new-f)/LA.norm(p-f)
+        try:
+            
+            print(sigma)
         
-        R = Rotation.from_quat([self.estimated_pose.pose.orientation.x,self.estimated_pose.pose.orientation.y,self.estimated_pose.pose.orientation.z,self.estimated_pose.pose.orientation.q])
-        extrinsic_matrix = np.hstack((R, p))        
+            x = self.estimated_pose.pose.position.x
+            y = self.estimated_pose.pose.position.y
+            z = self.estimated_pose.pose.position.z
+
+            p = np.array([x, y, z])
+            f = np.array([0, 0, self.focal_length])
+
+            p_new = p + np.multiply(np.divide((f-p), LA.norm(p-f)), sigma)
+            scale_obj = LA.norm(p_new-f)/LA.norm(p-f)
+            
+            R = Rotation.from_quat([self.estimated_pose.pose.orientation.x,self.estimated_pose.pose.orientation.y,self.estimated_pose.pose.orientation.z,self.estimated_pose.pose.orientation.w])
+            R = R.as_matrix()
+            p_new = p_new.reshape(3,1)
+            extrinsic_matrix = np.hstack((R, p_new))        
+            
+            scaled_pcl = self.mesh_vertices * scale_obj
+            
+            
+            depth_map, object_pixels = self.generate_depth_map(scaled_pcl, self.intrinsic_matrix, extrinsic_matrix, (self.height_, self.width_))
+            self.virtual_depth_array = self.remove_occluded_points(depth_map,object_pixels)
+            #self.virtual_depth_array = depth_map
+            self.pixel_cad_w, self.pixel_cad_h = zip(*object_pixels)
+           
+            cv2.imshow("depth map",self.virtual_depth_array)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            
+        except Exception as e:
+            print("An error occurred while generating virtual depth map:", e)
+            print("check if the object is outside the field of view of the camera")
+           
         
-        depth_map, object_pixels = generate_depth_map(self.mesh_vertices, self.intrinsic_matrix, extrinsic_matrix, (self.height_, self.width_))
-        self.virtual_depth_array = remove_occluded_points(depth_map,object_pixels)
-        self.pixel_cad_w, self.pixel_cad_h = zip(*object_pixels)
         
         #self.virtual_depth_array = np.flipud(self.virtual_depth_array)
 
@@ -242,77 +273,43 @@ class DepthOptimizer(Node):
             if (outlier_mask[i] == True):
                 self.real_useful_depth[i] = 0.0
     
-    def convert_from_uvd(self,v, u, d, fx, fy, cx, cy):
-        x_over_z = (cx - u) / fx
-        y_over_z = (cy - v) / fy
-        z = d / np.sqrt(1. + x_over_z**2 + y_over_z**2)
-        return z
-    
 
     def cost_function(self,sigma):
-        tic1 = time.perf_counter()
-
-        # Create virtual depth map based on estimated pose and actual sigma
-        self.virtual_depth_map(sigma)
-        toc1 = time.perf_counter()
-        print(f"virtual depth map realized in {toc1 - tic1:0.4f} seconds")
-
-        sum = 0
-        num_pixel_obj = 0
-        tic1 = time.perf_counter()
-        for k in range(len(self.pixel_cad_h)):
-            if (self.real_useful_depth[k] != 0):  # if depth value isn't an outlier
-                i = self.pixel_cad_h[k]
-                j = self.pixel_cad_w[k]
         
-                d_hat = self.virtual_depth_array[i, j, 0]
-                d = self.real_useful_depth[k]
-
-                sum = sum + pow((d-d_hat), 2)
-                num_pixel_obj = num_pixel_obj+1
-                
-        toc1 = time.perf_counter()
-        print(f"evaluation cost function realized in {toc1 - tic1:0.4f} seconds")
         try:
+            tic1 = time.perf_counter()
+
+            # Create virtual depth map based on estimated pose and actual sigma
+            self.virtual_depth_map(sigma)
+            toc1 = time.perf_counter()
+            print(f"virtual depth map realized in {toc1 - tic1:0.4f} seconds")
+
+            sum = 0
+            num_pixel_obj = 0
+            tic1 = time.perf_counter()
+            
+            for k in range(len(self.pixel_cad_h)-1):
+                if (self.real_useful_depth[k] != 0):  # if depth value isn't an outlier
+                    i = self.pixel_cad_h[k]
+                    j = self.pixel_cad_w[k]
+            
+                    d_hat = self.virtual_depth_array[i, j]
+                    d = self.real_useful_depth[k]
+
+                    sum = sum + pow((d-d_hat), 2)
+                    num_pixel_obj = num_pixel_obj+1
+                    
+            toc1 = time.perf_counter()
+            print(f"evaluation cost function realized in {toc1 - tic1:0.4f} seconds")
             return sum/num_pixel_obj
+        
         except ZeroDivisionError:
             print("Error: Division by zero")
+        except Exception as e:
+            print("An error occurred while evaluating cost function", e)
 
     
-    def plot_depth(self,sigma):
-        # Create virtual depth map based on estimated pose and actual sigma
-        self.virtual_depth_map(sigma)
-
-        virtual_depth_array_used = []
-        real_depth_array_used = []
-        x_axis = []
-        y_axis = []
-
-        for k in range(len(self.pixel_cad_h)):
-            if (self.real_useful_depth[k] != 0):
-                i = self.pixel_cad_h[k]
-                j = self.pixel_cad_w[k]
-
-                d_hat = self.convert_from_uvd(
-                    i, j, self.virtual_depth_array[i, j, 0], self.fx, self.fy, self.cx, self.cy)
-                d = self.real_useful_depth[k]
-
-                virtual_depth_array_used.append(d_hat)
-                real_depth_array_used.append(d)
-                x_axis.append(i)
-                y_axis.append(j)
-
-        fig = plt.figure()
-        ax = fig.add_subplot(projection='3d')
-        ax.scatter(x_axis, y_axis, real_depth_array_used, marker='o')
-        ax.scatter(x_axis, y_axis, virtual_depth_array_used, marker='o')
-        ax.set_xlabel('i')
-        ax.set_ylabel('j')
-        plt.show()
-
-
-
-    def depth_optimize_callback  (self, req, response):
+    def depth_optimize_callback(self, req, response):
 
         self.get_logger().info('Request received')
         tic = time.perf_counter()
@@ -326,11 +323,23 @@ class DepthOptimizer(Node):
         self.intrinsic_matrix = np.array([[self.fx, 0, self.cx],
                                           [0, self.fy, self.cy],
                                           [0, 0, 1]])
-        self.mesh_vertices = read_ply_file(file_name_ply)
+        
+        self.mesh_vertices = self.read_ply_file(self.mesh_path)
 
         # Getting useful pixels
         tic1 = time.perf_counter()
-        self.get_useful_pixels(req.depth_matrix)
+        # generate fake real depth
+        self.virtual_depth_map(-5)
+        fake_depth = self.virtual_depth_array
+        fake_depth = fake_depth.reshape(self.height_*self.width_)
+        print(fake_depth)
+        print("shape fake",fake_depth.shape)
+        for i in range(640*480):
+            if fake_depth[i]!=0:
+                print(fake_depth[i])
+
+        self.get_useful_pixels(fake_depth)
+        #self.get_useful_pixels(req.depth_matrix)
         toc1 = time.perf_counter()
         print(f"get useful pixels realized in {toc1 - tic1:0.4f} seconds")
 
@@ -358,13 +367,13 @@ class DepthOptimizer(Node):
 
         if res.fun > self.tol_optimization:
             success = False
+            print("OPTIMIZATION FAILURE:\n")
+            print("function value greater then the tol. optimization", res.fun, self.tol_optimization)  
+            #res.x  = 0 # return the estimated position without changes
         else:
             success = True
-
-        if (success == False):
-            res.x = 0
-        
-      
+            print("OPTIMIZATION COMPLETED:\n")  
+            
         x = self.estimated_pose.pose.position.x
         y = self.estimated_pose.pose.position.y
         z = self.estimated_pose.pose.position.z
@@ -380,15 +389,12 @@ class DepthOptimizer(Node):
 
         scale_obj = LA.norm(p_new-f)/LA.norm(p-f)
 
-        if self.get_plot:
-            self.plot_cost_function(sigma_min=self.sigma_min_plt, sigma_max=self.sigma_max_plt)
-            self.plot_depth(res.x)
+          
+        print("Function_min: ", res.fun)
+        print("Sigma_min [m]: ", res.x)
+        print("Scale obj: ", scale_obj)
+        print("Optimized Pose: ", optimized_pose)
 
-        if success:
-            print("OPTIMIZATION COMPLETED:\n")    
-            print("Function_min: ", res.fun)
-            print("Sigma_min [m]: ", res.x)
-            print("Optimized Pose: ", optimized_pose)
 
         # Clear variables for next service call
         self.reset_scene()

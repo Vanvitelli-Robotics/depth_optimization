@@ -27,6 +27,37 @@
     mesh_scale: 1.0
     # 0.001 #bowl
     #1.0 #lime
+
+/depth_optimizer_server_simple:
+  ros__parameters:
+   
+    # camera parameters - please provide your own camera parameters
+    width_: 640 
+    height_: 480
+    fx: 610.59326171875
+    fy: 610.605712890625
+    cx: 317.7075500488281
+    cy: 238.1421356201172
+    focal_length: 0.0
+
+    # optimization parameters 
+    max_virtual_depth: 3.0  # maximum virtual depth considered in the depth optimization
+    tol_optimization: 0.1  # tolerance for the depth optimization (value of the objective function at which the optimization is stopped)
+    remove_outliers: False   # remove outliers using RANSAC
+
+    # mesh parameters - These parameters can be dinamically modified trough ros2 param set /depth_optimizer_server /parameter_name value
+    # Path to the mesh file
+    mesh_path: /home/marco/test/cube_resampled_rot.ply
+    # /home/mdesimone/Documents/fork/fork.obj
+    # /home/mdesimone/Documents/simple_glass/simple_glass.obj
+    # /home/mdesimone/Documents/fork/fork.obj
+    # /home/mdesimone/Documents/bowl/bowl.obj 
+    # /home/mdesimone/Documents/lime_ocado/Lime.obj  #lime
+
+    # Scale factor for the mesh
+    mesh_scale: 1.0
+    # 0.001 #bowl
+    #1.0 #lime
     
      
 
