@@ -29,7 +29,7 @@ You can run the depth optimization directly in a docker container with Ubuntu 22
 4. **Install conda environment**
    Inside the container
    ```
-   cd root/src/
+   cd root/ros2ws/src/
    conda deactivate
    colcon build
    run_depth_optimizer_ros2

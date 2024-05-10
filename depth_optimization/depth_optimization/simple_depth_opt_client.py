@@ -82,7 +82,7 @@ def main(args=None):
     minimal_client = SimpleDepthOptClient()
 
     # topics where the estimated pose and depth are published
-    pose_topic = '/dope/pose_fork'
+    pose_topic = '/dope/pose_lime'
     depth_topic = '/camera/aligned_depth_to_color/image_raw'
 
 
