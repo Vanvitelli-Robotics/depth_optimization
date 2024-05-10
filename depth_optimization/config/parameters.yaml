@@ -61,4 +61,48 @@
     #1.0 #lime
     
      
+/dope_depth_optimizer_server:
+  ros__parameters:
 
+    dope_detection_topic: /dope_node/detected_objects
+   
+    # camera parameters - please provide your own camera parameters
+    camera_topic_aligned_depth_to_color: /camera/aligned_depth_to_color/image_raw # topic where to read the depth_image aligned with the RGB image
+    width_: 640 
+    height_: 480
+    fx: 610.59326171875
+    fy: 610.605712890625
+    cx: 317.7075500488281
+    cy: 238.1421356201172
+    focal_length: 0.0
+    depth_scale: 0.001
+
+    # optimization parameters 
+    max_virtual_depth: 3.0  # maximum virtual depth considered in the depth optimization
+    tol_optimization: 0.1  # tolerance for the depth optimization (value of the objective function at which the optimization is stopped)
+    remove_outliers: True   # remove outliers using RANSAC
+    bound_scale : 0.8 # bound for the depth optimization (used for constrain the optimization variable)
+
+    class_ids:
+      "apple": 1
+      "santal_ace": 4
+      "lime": 5
+      "bowl": 6
+      "fork": 7
+      "glass": 8
+
+    meshes:
+      "apple": "/home/workstation/dope_ros_ws/src/grasp_dope/scripts/models/Apple/Apple_4K/food_apple_01_4k_simplify.obj"
+      "santal_ace": "/home/sfederico/Documents/cad_models/santal_ace/santal_centered.obj"
+      "lime" : "package://dope_ros2/meshes/Lime.obj"
+      "bowl" : "package://dope_ros2/meshes/Lime.obj"
+      "glass" : "package://dope_ros2/meshes/Lime.obj"
+      "fork" : "package://dope_ros2/meshes/Lime.obj"
+
+    mesh_scales: # scale factor for the mesh - Take care to set the value as x.y (otherwise it willi be considered as an integer)
+      "apple": 1.0
+      "santal_ace": 0.001
+      "lime" : 1000.0
+      "bowl": 0.001
+      "fork": 1.0
+      "glass": 1.0

@@ -1,0 +1,7 @@
+int32 class_id
+int32 n_max_poses
+bool optimize
+---
+geometry_msgs/PoseStamped[] refined_poses
+float64[] scale_obj
+bool[] success
