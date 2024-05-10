@@ -26,8 +26,10 @@ DEPTH_ID=`docker ps -aqf "name=^/${CONTAINER_NAME}$"`
 if [ -z "${DEPTH_ID}" ]; then
     echo "Creating new depth_optimizer docker container."
     xhost +local:root
-    docker run --gpus all  -it --privileged -v ${HOST_DIR}:${CONTAINER_DIR}:rw -v /tmp/.X11-unix:/tmp/.X11-unix:rw --env="DISPLAY" --name=${CONTAINER_NAME} depth-optimizer:humble-v1 bash
+    #docker run --gpus all  -it --privileged -v ${HOST_DIR}:${CONTAINER_DIR}:rw -v /tmp/.X11-unix:/tmp/.X11-unix:rw --env="DISPLAY" --name=${CONTAINER_NAME} depth-optimizer:humble-v1 bash
     #--network=host ros2 not work with this
+    docker run --gpus all -it --privileged --ipc=host -v ${HOST_DIR}:${CONTAINER_DIR}:rw -v /tmp/.X11-unix:/tmp/.X11-unix:rw -v /usr/share/nvidia:/usr/share/nvidia --env="DISPLAY" --runtime=nvidia --name=${CONTAINER_NAME} depth-optimizer:humble-v1 bash
+
 else
     echo "Found depth_optimizer docker container: ${DEPTH_ID}."
     # Check if the container is already running and start if necessary.

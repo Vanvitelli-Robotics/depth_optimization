@@ -40,26 +40,22 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
   && apt-get -y autoremove \
   && apt-get clean
 
+RUN pip install -U scikit-learn
 
 # install microconda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh 
 RUN bash Miniconda3-latest-Linux-x86_64.sh -b -u -p ${HOME}/miniconda3
 RUN rm Miniconda3-latest-Linux-x86_64.sh
-#ENV PATH ${HOME}/miniconda3/bin:$PATH
-
-
-#COPY docker/install_microconda.sh ${HOME}
-#RUN ${HOME}/install_microconda.sh
-#RUN conda init bash \
-#    && . ~/.bashrc
 
 # Setup colcon workspace
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 ENV ROS2WS ${HOME}/ros2ws
 COPY .* ${ROS2WS}/src/depth_optimization/
-COPY /docker/init_workspace.sh ${HOME}
-COPY /depth_optimization/setup_environment.sh ${HOME}
-#RUN bash /${HOME}/init_workspace.sh
-#RUN echo "source ${ROS2WS}/install/setup.bash" >> ${HOME}/.bashrc
+COPY /docker/setup_environment_nvisii.sh ${HOME}
+COPY ./depth_optimization/environment.yaml ${HOME}
+RUN source ${HOME}/setup_environment_nvisii.sh 
+RUN echo "source ${ROS2WS}/install/setup.bash" >> ${HOME}/.bashrc
+
 
 ENV DISPLAY :0
 ENV NVIDIA_VISIBLE_DEVICES all
