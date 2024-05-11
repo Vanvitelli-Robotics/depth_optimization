@@ -64,6 +64,7 @@
 /dope_depth_optimizer_server:
   ros__parameters:
 
+    # topic where the detections are published
     dope_detection_topic: /dope_node/detected_objects
    
     # camera parameters - please provide your own camera parameters

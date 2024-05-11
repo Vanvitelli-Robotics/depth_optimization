@@ -13,7 +13,7 @@ from rclpy.node import Node
 from rcl_interfaces.msg import SetParametersResult
 
 # python modules
-import nvisii
+#import nvisii
 import numpy as np
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
@@ -337,7 +337,8 @@ class DopeDepthOptimizerServer(Node):
         'fy': 610.605712890625,
         'cx': 317.7075500488281,
         'cy': 238.1421356201172,
-        'focal_length': 0
+        'focal_length': 0,
+        'depth_scale' : 0.001
     } 
     object_parameters = {
         'mesh_path': [],
@@ -352,19 +353,15 @@ class DopeDepthOptimizerServer(Node):
     
     dope_msg_received = False
     depth_msg_received = False
+    
+    detection_msg = Detection3DArray()
+    depth_msg = Image()
 
     def __init__(self):
         super().__init__('dope_depth_optimizer_server', automatically_declare_parameters_from_overrides=True)
         # read configuration parameters from yaml file
         self.read_parameters()
 
-        # fake request
-        req = DopeDepthOptimize.Request()
-        req.class_id = 5
-        req.n_max_poses = 1
-        req.optimize = True
-        res = DopeDepthOptimize.Response()
-        #self.dope_depth_optimize(req,res)
         # create the service
         self.srv = self.create_service(DopeDepthOptimize, 'dope_depth_optimize', self.dope_depth_optimize)
 
@@ -472,19 +469,35 @@ class DopeDepthOptimizerServer(Node):
     
     def get_depth_image(self, depth_image, height, width, depth_scale):
         # this method converts the depth image to a depth array in meters
+        print("Decode depth map from depth msg...")
+        
         bridge = CvBridge()
 
         current_depth = np.zeros((height, width), dtype=np.float64)
         current_depth = bridge.imgmsg_to_cv2(depth_image, depth_image.encoding)
-        
-        
+
         depth_array = np.zeros( width * height, dtype=np.float64)
 
         for i in range(height):
             for j in range(width):
-                self.depth_array[i * width + j] += current_depth[i, j] * np.float64(depth_scale)
+                depth_array[i * width + j] += current_depth[i, j] * np.float64(depth_scale)
 
         return depth_array
+    
+    def print_opt_result(self, pose, scale, success):
+        
+        if success == True:
+            print("optimization success")
+        else:
+            print("optimization failure")
+            
+        print("refined position:")
+        print("x = " + str(pose.pose.position.x))
+        print("y = " + str(pose.pose.position.y))
+        print("z = " + str(pose.pose.position.z))
+        print("scale factor = " + str(scale))    
+    
+    
     
     
 
@@ -505,7 +518,7 @@ class DopeDepthOptimizerServer(Node):
         # if the class id is in the parameters, get the mesh path and mesh scale from the parameters
         # create a DepthOptimizer object with the camera parameters, object parameters and optimization parameters
         # call the depth_optimize method of the DepthOptimizer object with the estimated pose and depth values
-        # return the refined poses, scale of the object and success of the optimization
+        # return the refined poses, scales of the objects and success of the optimizations
 
         print("Dope Depth Optimize Service Called")
 
@@ -522,7 +535,7 @@ class DopeDepthOptimizerServer(Node):
         # response parameters
         refined_poses = []
         scale_obj = []
-        success = []
+        opt_success = []
 
         # get the mesh path and mesh scale from the parameters
         try:
@@ -556,31 +569,35 @@ class DopeDepthOptimizerServer(Node):
         poses = self.get_detection(self.detection_msg, class_id, n_max_poses)
         print("Poses extracted")
         print(poses)
-
-        # extract the depth values from the depth message
-        real_depth_array = self.get_depth_image(self.depth_msg, self.camera_parameters['height_'], self.camera_parameters['width_'], self.camera_parameters['depth_scale'])
-        print("Depth image extracted")
-        print(real_depth_array)
-
-
-
         
         
-        
-        # create a DepthOptimizer object with the camera parameters, object parameters and optimization parameters
-        depth_optimizer = DepthOptimizer(self.camera_parameters, {'mesh_path': mesh_path, 'mesh_scale': mesh_scale}, self.optimization_parameters)
+        if optimize:
+            # extract the depth values from the depth message
+            real_depth_array = self.get_depth_image(self.depth_msg, self.camera_parameters['height_'], self.camera_parameters['width_'], self.camera_parameters['depth_scale'])
+            print("Depth image extracted")
+            print(real_depth_array)
 
-        
+            # create a DepthOptimizer object with the camera parameters, object parameters and optimization parameters
+            depth_optimizer = DepthOptimizer(self.camera_parameters, {'mesh_path': mesh_path, 'mesh_scale': mesh_scale}, self.optimization_parameters)
+            
+            # optimize each pose
+            for pose in poses:
+                pose, scale, success = depth_optimizer.depth_optimize(pose,real_depth_array)
+                self.print_opt_result(pose, scale, success)
+                refined_poses.append(pose)
+                scale_obj.append(scale)
+                opt_success.append(success)
+                
+            print("Optimizations completed")
+                
+            response.refined_poses = refined_poses
+            response.scale_obj = scale_obj
+            response.success = opt_success
+        else:
+            # return only the estimated poses from DOPE
+            response.refined_poses = poses 
 
-
-        
-
-        
-        
-
-
-        
-
+            
         return response
 
 
