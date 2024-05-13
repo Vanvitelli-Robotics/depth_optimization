@@ -36,7 +36,7 @@ def main(args=None):
     # publisher to publish the refined pose
     #refined_pose_pub = minimal_client.create_publisher(PoseStamped, 'refined_pose', 1)
 
-    class_id = 5
+    class_id = 8
     n_max_poses = 4
     optimize = True
     response = minimal_client.send_request(class_id, n_max_poses, optimize)

@@ -13,7 +13,7 @@ from rclpy.node import Node
 from rcl_interfaces.msg import SetParametersResult
 
 # python modules
-#import nvisii
+import nvisii
 import numpy as np
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
@@ -281,6 +281,7 @@ class DepthOptimizer():
 
         # Clear variables for next service call
         self.reset_scene()
+        
 
         return optimized_pose, scale_obj, success
     
@@ -292,6 +293,11 @@ class DepthOptimizer():
         self.pixel_cad_w = []
         self.real_useful_depth = []
         self.virtual_depth_array = []
+        self.estimated_pose = PoseStamped()
+
+    def close_scene(self):
+        nvisii.deinitialize()
+        self.initialized_scene = False
 
     def populate_scene(self):
         camera = nvisii.entity.create(
@@ -361,6 +367,9 @@ class DopeDepthOptimizerServer(Node):
         super().__init__('dope_depth_optimizer_server', automatically_declare_parameters_from_overrides=True)
         # read configuration parameters from yaml file
         self.read_parameters()
+
+        # create a DepthOptimizer object with the camera parameters, object parameters and optimization parameters
+        self.depth_optimizer = DepthOptimizer(self.camera_parameters, self.object_parameters, self.optimization_parameters)
 
         # create the service
         self.srv = self.create_service(DopeDepthOptimize, 'dope_depth_optimize', self.dope_depth_optimize)
@@ -453,13 +462,17 @@ class DopeDepthOptimizerServer(Node):
         class_id = str(class_id)
         poses = []
         scores = []
+        pose_stamped = PoseStamped()
+
         for detection in msg.detections:
-            for hypothesis in detection.results:
-                if hypothesis.hypothesis.class_id == class_id:
-                    print("Class id found")               
-                    pose = hypothesis.pose.pose
-                    poses.append(pose)
-                    scores.append(hypothesis.hypothesis.score)
+            for result in detection.results:
+                if result.hypothesis.class_id == class_id:
+                    print("Class id found")           
+                    pose_stamped = PoseStamped()   
+                    pose_stamped.header = detection.header 
+                    pose_stamped.pose = result.pose.pose
+                    poses.append(pose_stamped)
+                    scores.append(result.hypothesis.score)
 
         # sort poses based on scores
         poses = [x for _, x in sorted(zip(scores, poses), key=lambda pair: pair[0], reverse=True)]
@@ -569,6 +582,14 @@ class DopeDepthOptimizerServer(Node):
         poses = self.get_detection(self.detection_msg, class_id, n_max_poses)
         print("Poses extracted")
         print(poses)
+
+        # update depth_optimizer object with the object parameters
+        import resource_retriever
+        mesh_path = resource_retriever.get_filename(
+                        mesh_path, use_protocol=False)
+        self.object_parameters['mesh_path'] = mesh_path
+        self.object_parameters['mesh_scale'] = mesh_scale
+        self.depth_optimizer.change_mesh(self.object_parameters)
         
         
         if optimize:
@@ -576,18 +597,16 @@ class DopeDepthOptimizerServer(Node):
             real_depth_array = self.get_depth_image(self.depth_msg, self.camera_parameters['height_'], self.camera_parameters['width_'], self.camera_parameters['depth_scale'])
             print("Depth image extracted")
             print(real_depth_array)
-
-            # create a DepthOptimizer object with the camera parameters, object parameters and optimization parameters
-            depth_optimizer = DepthOptimizer(self.camera_parameters, {'mesh_path': mesh_path, 'mesh_scale': mesh_scale}, self.optimization_parameters)
             
             # optimize each pose
             for pose in poses:
-                pose, scale, success = depth_optimizer.depth_optimize(pose,real_depth_array)
+                pose, scale, success = self.depth_optimizer.depth_optimize(pose,real_depth_array)
                 self.print_opt_result(pose, scale, success)
                 refined_poses.append(pose)
                 scale_obj.append(scale)
                 opt_success.append(success)
-                
+
+                            
             print("Optimizations completed")
                 
             response.refined_poses = refined_poses
@@ -606,7 +625,7 @@ class DopeDepthOptimizerServer(Node):
 def main():
     rclpy.init()
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
     dope_depht_optimizer_server = DopeDepthOptimizerServer()
     executor = MultiThreadedExecutor()

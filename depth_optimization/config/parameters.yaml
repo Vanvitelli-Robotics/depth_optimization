@@ -96,14 +96,14 @@
       "apple": "/home/workstation/dope_ros_ws/src/grasp_dope/scripts/models/Apple/Apple_4K/food_apple_01_4k_simplify.obj"
       "santal_ace": "/home/sfederico/Documents/cad_models/santal_ace/santal_centered.obj"
       "lime" : "package://dope_ros2/meshes/Lime.obj"
-      "bowl" : "package://dope_ros2/meshes/Lime.obj"
-      "glass" : "package://dope_ros2/meshes/Lime.obj"
-      "fork" : "package://dope_ros2/meshes/Lime.obj"
+      "bowl" : "package://dope_ros2/meshes/bowl.obj"
+      "glass" : "package://dope_ros2/meshes/imple_glass.obj"
+      "fork" : "package://dope_ros2/meshes/meshes/fork.obj"
 
     mesh_scales: # scale factor for the mesh - Take care to set the value as x.y (otherwise it willi be considered as an integer)
       "apple": 1.0
       "santal_ace": 0.001
-      "lime" : 1000.0
+      "lime" : 1.0
       "bowl": 0.001
       "fork": 1.0
       "glass": 1.0
