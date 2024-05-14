@@ -1,9 +1,12 @@
 
 from depth_optimization_interfaces.srv import DopeDepthOptimize
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseArray, Pose
 
 import rclpy
 from rclpy.node import Node
+import time
+import sys
+
 
 
 
@@ -33,38 +36,43 @@ def main(args=None):
 
     minimal_client = SimpleDepthOptClient()
 
-    # publisher to publish the refined pose
-    #refined_pose_pub = minimal_client.create_publisher(PoseStamped, 'refined_pose', 1)
-
-    class_id = 8
-    n_max_poses = 4
-    optimize = True
+    # get the class_id and n_max_poses from the command line
+    class_id = int(sys.argv[1])
+    n_max_poses = int(sys.argv[2])
+    optimize = bool(sys.argv[3])
     response = minimal_client.send_request(class_id, n_max_poses, optimize)
     
     for pose in response.refined_poses:
         print("RESPONSE RECEIVED")
         print("refined position:")
+        print("frame_id = " + str(pose.header.frame_id))
         print("x = " + str(pose.pose.position.x))
         print("y = " + str(pose.pose.position.y))
         print("z = " + str(pose.pose.position.z))
         
     for scale_obj in response.scale_obj:
         print("scale factor = " + str(scale_obj))
-         
 
 
-    # publish the refined pose
-    #refined_pose_pub.publish(response.refined_pose)
+    if len(response.refined_poses) == 0:
+        print("No poses found for class_id = " + str(class_id))
+        return
+    
+    # publish the refined poses
+    refined_pose_pub = minimal_client.create_publisher(PoseArray, 'refined_poses', 1) 
+    pose_array = PoseArray()
+    pose_array.poses = [Pose() for i in range(len(response.refined_poses))]
+    pose_array.header = response.refined_poses[0].header
+    
+    i = 0
+    for pose in response.refined_poses:
+        pose_array.poses[i] =  pose.pose
+        i = i + 1
 
-
-
-    # user_input = input("Do you want to continue? (y/n): ")
-    # if user_input.lower() != 'y':
-    #     N = 30
-    #     for _ in range(N):
-    #         rclpy.spin_once(minimal_client)
-    #         time.sleep(0.1)
-    #         break
+    # publish the refined poses
+    while rclpy.ok():
+        refined_pose_pub.publish(pose_array)
+        time.sleep(1)
 
     minimal_client.destroy_node()
     rclpy.shutdown()

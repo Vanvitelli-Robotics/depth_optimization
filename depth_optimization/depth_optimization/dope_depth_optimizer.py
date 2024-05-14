@@ -469,7 +469,7 @@ class DopeDepthOptimizerServer(Node):
                 if result.hypothesis.class_id == class_id:
                     print("Class id found")           
                     pose_stamped = PoseStamped()   
-                    pose_stamped.header = detection.header 
+                    pose_stamped.header = msg.header 
                     pose_stamped.pose = result.pose.pose
                     poses.append(pose_stamped)
                     scores.append(result.hypothesis.score)

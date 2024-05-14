@@ -80,7 +80,7 @@
 
     # optimization parameters 
     max_virtual_depth: 3.0  # maximum virtual depth considered in the depth optimization
-    tol_optimization: 0.1  # tolerance for the depth optimization (value of the objective function at which the optimization is stopped)
+    tol_optimization: 0.01  # tolerance for the depth optimization (value of the objective function at which the optimization is stopped)
     remove_outliers: True   # remove outliers using RANSAC
     bound_scale : 0.8 # bound for the depth optimization (used for constrain the optimization variable)
 
@@ -97,8 +97,8 @@
       "santal_ace": "/home/sfederico/Documents/cad_models/santal_ace/santal_centered.obj"
       "lime" : "package://dope_ros2/meshes/Lime.obj"
       "bowl" : "package://dope_ros2/meshes/bowl.obj"
-      "glass" : "package://dope_ros2/meshes/imple_glass.obj"
-      "fork" : "package://dope_ros2/meshes/meshes/fork.obj"
+      "glass" : "package://dope_ros2/meshes/simple_glass.obj"
+      "fork" : "package://dope_ros2/meshes/fork.obj"
 
     mesh_scales: # scale factor for the mesh - Take care to set the value as x.y (otherwise it willi be considered as an integer)
       "apple": 1.0
