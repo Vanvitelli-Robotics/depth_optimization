@@ -1,15 +1,20 @@
 # Depth Optimizer
-This is a ROS2 node to refine the 6D pose coming from any pose estimation algorithm by exploiting depth measurements. It addresses the _dimension variability problem_ which affects the RGB-only based neural networks when objects of variable dimension have to be inferred. It solves the problem by setting up a geometric optimization problem. For more details, see our [paper](https://arxiv.org/abs/2305.15856).
+In this repository there are different ROS2 implementations of an algorithm that refines the 6D pose coming from any pose estimation algorithm by exploiting depth measurements. It addresses the _dimension variability problem_ which affects the RGB-only based neural networks when objects of variable dimension have to be inferred. It solves the problem by setting up a geometric optimization problem. For more details, see our [paper](https://arxiv.org/abs/2305.15856).
 
 ## Description
-The node exposes a python ROS2 service with the following interface:  
+The node "depth_optimizer.py" exposes a python ROS2 service with the following interface:  
 * ***inputs***: estimated object pose, depth frame values from rgb-d camera, cad model of recongized object (models folder)
 * ***outputs***: refined object pose, scaling factor of the target object
+
+The node "dope_depth_optimizer.py" was implementad to work directly with [DOPE](https://github.com/Vanvitelli-Robotics/DOPE.git).
+It exposes a python ROS2 service with the following interface:  
+* ***inputs***: class_id (int), n_max_poses (int), optimize (bool)
+* ***outputs***: refined poses, scaling factos, sucesses
 
 ## Getting Started
 
 ### Dependencies
-The ROS2 node (python 3.10) requires the python module NVISII (https://github.com/owl-project/NVISII), which is available only for python <= 3.8. For compatibility reasons, you can use a conda environment as described below, else skip to 3) after installing NVISII.
+The ROS2 nodes(python 3.10) require the python module NVISII (https://github.com/owl-project/NVISII), which is available only for python <= 3.8. For compatibility reasons, you can use a conda environment as described below, else skip to 3) after installing NVISII.
 
 1) Install conda [instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
 
@@ -17,6 +22,11 @@ The ROS2 node (python 3.10) requires the python module NVISII (https://github.co
 You can directly create the conda environment using the environment.yaml file:
   ```diff
   source setup_environment.sh
+  ```
+In the same folder you can run these commands to add some aliases to run the nodes in the right conda environment
+  ```diff
+  echo "alias run_depth_optimizer_ros2='source $PWD/run_depth_opt.sh'" >> ~/.bashrc
+  echo "alias run_dope_depth_optimizer_ros2='source $PWD/run_dope_depth_opt.sh'" >> ~/.bashrc
   ```
 Alternativly, follow these steps:
 
@@ -54,19 +64,29 @@ export PYTHONPATH="$CONDA_PREFIX/lib/python3.8/site-packages:$PYTHONPATH"
 
 3) Run the node
 
-Once the conda environemnt is created and the PYTHONPATH correctly set (if necessary), you can run the node:
+Once the conda environment is created and the PYTHONPATH correctly set (if necessary), you can run the node:
 ```diff
 conda activate py_depth_opt
+export PYTHONPATH="$CONDA_PREFIX/lib/python3.8/site-packages:$PYTHONPATH"
 ros2 launch depth_optimization depth_optimizer.launch.py 
 ```
 
 ---
-The depth optimizer node depends on several parameters that can be set through the parameters.yaml file in the config folder. Moreover, the two parameters "mesh_path" and "mesh_scale", can be dinamically changed through the cli (ros2 param set) or by code. 
+The "depth_optimizer.py" depends on several parameters that can be set through the parameters.yaml file in the config folder (in the /depth_optimizer section). Moreover, the two parameters "mesh_path" and "mesh_scale", can be dinamically changed through the cli (ros2 param set) or by code. 
 
-You can launch a simple client node with
+You can launch a simple client node for "depth_optimizer.py" with 
 ```diff
 ros2 run depth_optimization simple_depth_optimizer_client 
 ```
+
+The "dope_depth_optimizer.py" also depends on several parameters defined in config/parameters.yaml in the /dope_depth_optimizer section. Here you have to set the camera parameters, the optimization parameters and the class id list, mesh paths and mesh scales defined in the config/config_dope.yaml of [DOPE](https://github.com/Vanvitelli-Robotics/DOPE.git).
+
+You can launch a simple client node for "dope_depth_optimizer.py" with 
+```diff
+ros2 run depth_optimization dope_depth_opt_client 
+```
+
+
 
 ## How to cite 
 

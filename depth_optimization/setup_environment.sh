@@ -13,7 +13,8 @@ conda install python=3.10
 export PYTHONPATH="$CONDA_PREFIX/lib/python3.8/site-packages:$PYTHONPATH"
 
 # Alias for depth optimizer execution
-echo "alias run_depth_optimizer_ros2='source $PWD/run_depth_opt.sh'" >> ~/.bashrc
+# echo "alias run_depth_optimizer_ros2='source $PWD/run_depth_opt.sh'" >> ~/.bashrc
+# echo "alias run_dope_depth_optimizer_ros2='source $PWD/run_dope_depth_opt.sh'" >> ~/.bashrc
 
 
 
