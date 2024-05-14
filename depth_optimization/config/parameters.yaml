@@ -91,6 +91,7 @@
       "bowl": 6
       "fork": 7
       "glass": 8
+      "cracker": 9
 
     meshes:
       "apple": "/home/workstation/dope_ros_ws/src/grasp_dope/scripts/models/Apple/Apple_4K/food_apple_01_4k_simplify.obj"
@@ -99,6 +100,7 @@
       "bowl" : "package://dope_ros2/meshes/bowl.obj"
       "glass" : "package://dope_ros2/meshes/simple_glass.obj"
       "fork" : "package://dope_ros2/meshes/fork.obj"
+      "cracker": "package://dope_ros2/meshes/cracker_box.obj"
 
     mesh_scales: # scale factor for the mesh - Take care to set the value as x.y (otherwise it willi be considered as an integer)
       "apple": 1.0
@@ -107,3 +109,4 @@
       "bowl": 0.001
       "fork": 1.0
       "glass": 1.0
+      "cracker": 1.0
