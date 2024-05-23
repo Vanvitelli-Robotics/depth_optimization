@@ -26,6 +26,7 @@ import cv2
 
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
+import resource_retriever
 
 
 
@@ -357,6 +358,8 @@ class DopeDepthOptimizerServer(Node):
         'bound_scale': 0.8
     }
     
+    dope_sub = None
+    depth_sub = None
     dope_msg_received = False
     depth_msg_received = False
     
@@ -367,6 +370,12 @@ class DopeDepthOptimizerServer(Node):
         super().__init__('dope_depth_optimizer_server', automatically_declare_parameters_from_overrides=True)
         # read configuration parameters from yaml file
         self.read_parameters()
+
+        # create subscribers
+        subscribers_callback_grp = MutuallyExclusiveCallbackGroup()
+        self.dope_sub = self.create_subscription(Detection3DArray, self.dope_detection_topic, self.dope_callback, 1, callback_group=subscribers_callback_grp)
+        self.depth_sub = self.create_subscription(Image, self.camera_topic_aligned_depth_to_color, self.depth_callback, 1, callback_group=subscribers_callback_grp)
+       
 
         # create a DepthOptimizer object with the camera parameters, object parameters and optimization parameters
         self.depth_optimizer = DepthOptimizer(self.camera_parameters, self.object_parameters, self.optimization_parameters)
@@ -448,13 +457,13 @@ class DopeDepthOptimizerServer(Node):
 
     def dope_callback(self, msg):
         self.detection_msg = msg
-        print("Dope msg read")
+        #print("Dope msg read")
         self.dope_msg_received = True
         
 
     def depth_callback(self, msg):
         self.depth_msg = msg
-        print("Depth msg read")
+        #print("Depth msg read")
         self.depth_msg_received = True
 
     def get_detection(self, msg, class_id, n_max_poses):
@@ -535,6 +544,10 @@ class DopeDepthOptimizerServer(Node):
 
         print("Dope Depth Optimize Service Called")
 
+        # assure to read new messages
+        self.dope_msg_received = False
+        self.depth_msg_received = False    
+
         # request parameters
         class_id = request.class_id
         n_max_poses = request.n_max_poses
@@ -560,23 +573,17 @@ class DopeDepthOptimizerServer(Node):
             response.scale_obj = []
             return response
         
-        # create subscribers
-        subscribers_callback_grp = MutuallyExclusiveCallbackGroup()
-        self.dope_sub = self.create_subscription(Detection3DArray, self.dope_detection_topic, self.dope_callback, 1, callback_group=subscribers_callback_grp)
-        self.depth_sub = self.create_subscription(Image, self.camera_topic_aligned_depth_to_color, self.depth_callback, 1, callback_group=subscribers_callback_grp)
-       
-        while rclpy.ok() and not self.dope_msg_received and not self.depth_msg_received:
+        
+        while rclpy.ok() and not (self.dope_msg_received and self.depth_msg_received):
              print("Waiting for messages...")
              print("Dope msg status: ", self.dope_msg_received)
              print("Depth msg status: ", self.depth_msg_received)
              time.sleep(1)
 
-        # reset variables for next service call
-        self.destroy_subscription(self.dope_sub)        
-        self.destroy_subscription(self.depth_sub)
+        # # reset variables for next service call
+        # self.destroy_subscription(self.dope_sub)        
+        # self.destroy_subscription(self.depth_sub)
 
-        self.dope_msg_received = False
-        self.depth_msg_received = False    
 
         # get the poses of the detected objects with the class id, for a max of n_max_poses, ordered on the score value
         poses = self.get_detection(self.detection_msg, class_id, n_max_poses)
@@ -584,7 +591,6 @@ class DopeDepthOptimizerServer(Node):
         print(poses)
 
         # update depth_optimizer object with the object parameters
-        import resource_retriever
         mesh_path = resource_retriever.get_filename(
                         mesh_path, use_protocol=False)
         self.object_parameters['mesh_path'] = mesh_path
@@ -625,7 +631,8 @@ class DopeDepthOptimizerServer(Node):
 def main():
     rclpy.init()
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    # If you have multiple gpus select one of them
+    #os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     dope_depht_optimizer_server = DopeDepthOptimizerServer()
     executor = MultiThreadedExecutor()
