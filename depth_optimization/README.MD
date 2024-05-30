@@ -1,7 +1,6 @@
 # Depth Optimizer
-In this repository there are different ROS2 implementations of an algorithm that refines the 6D pose coming from any pose estimation algorithm by exploiting depth measurements. It addresses the _dimension variability problem_ which affects the RGB-only based neural networks when objects of variable dimension have to be inferred. It solves the problem by setting up a geometric optimization problem. For more details, see our [paper](https://arxiv.org/abs/2305.15856).
+Here you can find two implementations of the pose refinement algorithm 
 
-## Description
 The node "depth_optimizer.py" exposes a python ROS2 service with the following interface:  
 * ***inputs***: estimated object pose, depth frame values from rgb-d camera, cad model of recongized object (models folder)
 * ***outputs***: refined object pose, scaling factor of the target object
@@ -62,48 +61,43 @@ export PYTHONPATH="$CONDA_PREFIX/lib/python3.8/site-packages:$PYTHONPATH"
 
 ---
 
-3) Run the node
+3) Run the nodes
 
-Once the conda environment is created and the PYTHONPATH correctly set (if necessary), you can run the node:
+Once the conda environment is created and the PYTHONPATH correctly set (if necessary), you can run the node "depth_optimizer.py":
 ```diff
 conda activate py_depth_opt
 export PYTHONPATH="$CONDA_PREFIX/lib/python3.8/site-packages:$PYTHONPATH"
 ros2 launch depth_optimization depth_optimizer.launch.py 
 ```
+It is suggested to use the the alias 
+```diff
+run_depth_optimizer_ros2
+```
 
 ---
 The "depth_optimizer.py" depends on several parameters that can be set through the parameters.yaml file in the config folder (in the /depth_optimizer section). Moreover, the two parameters "mesh_path" and "mesh_scale", can be dinamically changed through the cli (ros2 param set) or by code. 
 
-You can launch a simple client node for "depth_optimizer.py" with 
+You can run a simple client node for "depth_optimizer.py" with 
 ```diff
 ros2 run depth_optimization simple_depth_optimizer_client 
 ```
 
+You can run "dope_depth_optimizer.py" using the alias 
+```diff
+run_dope_depth_optimizer_ros2
+```
+
 The "dope_depth_optimizer.py" also depends on several parameters defined in config/parameters.yaml in the /dope_depth_optimizer section. Here you have to set the camera parameters, the optimization parameters and the class id list, mesh paths and mesh scales defined in the config/config_dope.yaml of [DOPE](https://github.com/Vanvitelli-Robotics/DOPE.git).
 
-You can launch a simple client node for "dope_depth_optimizer.py" with 
+You can run a simple client node for "dope_depth_optimizer.py" with 
 ```diff
-ros2 run depth_optimization dope_depth_opt_client 
+ros2 run depth_optimization dope_optimization_client class_id n_max_poses optimize
 ```
+Example for the client: 'ros2 run depth_optimization dope_optimization_client 5 3 True'.
+Once the simple client has received the response to the service, it will publish the received poses on the topic /refined_poses. 
 
 
 
-## How to cite 
-
-If you use this software in a research project, please cite as follows:
-```
-@INPROCEEDINGS{10284072,
-  author={Costanzo, Marco and De Simone, Marco and Federico, Sara and Natale, Ciro and Pirozzi, Salvatore},
-  booktitle={2023 9th International Conference on Control, Decision and Information Technologies (CoDIT)}, 
-  title={Enhanced 6D Pose Estimation for Robotic Fruit Picking}, 
-  year={2023},
-  volume={},
-  number={},
-  pages={901-906},
-  keywords={Training;Visualization;Pose estimation;Force;Europe;Artificial neural networks;Sensors},
-  doi={10.1109/CoDIT58514.2023.10284072}}
-
-```
 
 
 

@@ -4,7 +4,7 @@ You can run the depth optimization directly in a docker container with Ubuntu 22
 
 ### Steps
 
-1. **Download the depth optimzer code**
+1. **Download the depth optimzer repo**
    ```
    git clone https://github.com/Vanvitelli-Robotics/depth_optimization.git depth_optimization
    ```
