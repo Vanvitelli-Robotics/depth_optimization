@@ -21,6 +21,14 @@ A docker image containing both [DOPE](https://github.com/Vanvitelli-Robotics/DOP
 3. **Run the container**
    First, add the weigths and the meshes in ```depth_optimization/docker_dope_depth_optimizer/recognition_files/meshes``` and ```depth_optimization/docker_dope_depth_optimizer/recognition_files/weights```. The meshes need to be in the obj format. 
 
+   Run the container with
+   ```
+   xhost +local:root
+   docker compose -f docker-compose_depth_opt_dope.yaml up -d
+   docker exec -it ros2_vision_component bash
+   ```
+
+
    Then, in the ```ros2_vision_component``` container run
    ```
    # make sure to deactivate every conda environment with 'conda deactivate' before building (otherwise you will have compilation errors)
