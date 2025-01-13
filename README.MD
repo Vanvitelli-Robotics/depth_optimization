@@ -1,5 +1,5 @@
 # Depth Optimizer
-In this repository there are different ROS2 implementations of an algorithm that refines the 6D pose coming from any pose estimation algorithm by exploiting depth measurements. It addresses the _dimension variability problem_ which affects the RGB-only based neural networks when objects of variable dimension have to be inferred. It solves the problem by setting up a geometric optimization problem. For more details, see our [paper](https://arxiv.org/abs/2305.15856) and have a look at the attached video!
+In this repository there are different ROS2 implementations of an algorithm that refines the 6D pose coming from any pose estimation algorithm by exploiting depth measurements. It addresses the _dimension variability problem_ which affects the RGB-only based neural networks when objects of variable dimension have to be inferred. It solves the problem by setting up a geometric optimization problem. For more details, see our [paper](https://doi.org/10.1109/codit58514.2023.10284072) and have a look at the attached video!
 [![Have a looK!](intro.jpg)](https://www.youtube.com/watch?v=_gxDGDy5Mug)
 
 ## Repository structure
