@@ -3,10 +3,10 @@ In this repository there are different ROS2 implementations of an algorithm that
 [![Have a looK!](intro.jpg)](https://www.youtube.com/watch?v=_gxDGDy5Mug)
 
 ## Repository structure
-* **depth_optimization** : this folder contains the ros2 nodes that implement the depth_optimization algorithm. Follow the [readme](./depth_optimization/README.md) inside it for more details
-* **depth_optimization_interfaces** : this folder contains the ros2 service definitions
-* **docker** :  go in this folder if you want to run the depth_optimizer inside in a docker container. Follow the guide inside it for more details 
-* **docker_dope_depth_optimizer** : go in this folder if you want to run the depth_optimizer inside a docker container in tandem with the 6D pose estimation algorithm [DOPE](https://github.com/Vanvitelli-Robotics/DOPE.git).
+* **depth_optimization** : this folder contains the ros2 nodes that implement the depth_optimization algorithm. Follow the [readme](./depth_optimization/README.MD) inside it for more details;
+* **depth_optimization_interfaces** : this folder contains the ros2 service definitions;
+* **docker** :  go in this folder if you want to run the depth_optimizer inside in a docker container. Follow the [readme](./docker/README.md) inside it for more details; 
+* **docker_dope_depth_optimizer** : use this folder if you want to run the depth_optimizer inside a docker container in tandem with the 6D pose estimation algorithm [DOPE](https://github.com/Vanvitelli-Robotics/DOPE.git).
 Follow the guide inside it for more details
 
 
